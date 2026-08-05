@@ -1,0 +1,37 @@
+<?php
+include_once "connexion.php";
+class Utilisateur_modele extends Connexion{
+    public function __construct(){}
+
+    public function editProfile($id, $nom){
+        $requete = self::$bdd->prepare('UPDATE utilisateur SET nom = ? WHERE id_utilisateur = ?');
+        $requete->execute([$nom, $id]);
+    }
+
+    public function supprimerProfile($id){
+        $requete = self::$bdd->prepare('DELETE FROM utilisateur WHERE id_utilisateur = ?');
+        $requete->execute([$id]);
+    }
+
+    public function ajouterUtilisateurProjet($nom, $idProjet){
+
+        $requeteUser = self::$bdd->prepare('SELECT id_utilisateur FROM utilisateur WHERE nom = ?');
+        $requeteUser->execute([$nom]);
+        $utilisateur = $requeteUser->fetch();
+
+        if ($utilisateur === false) {
+            return false;
+        }
+        $idUtilisateur = $utilisateur['id_utilisateur'];
+
+        $requeteVerif = self::$bdd->prepare('SELECT * FROM est_responsable_de WHERE id_projet = ? AND id_utilisateur = ?');
+        $requeteVerif->execute([$idProjet, $idUtilisateur]);
+        if ($requeteVerif->fetch() !== false) {
+            return false;
+        }
+
+        $requete = self::$bdd->prepare('INSERT INTO est_responsable_de (id_projet, id_utilisateur) VALUES (?, ?)');
+        $requete->execute([$idProjet, $utilisateur['id_utilisateur']]);
+        return true;
+    }
+}
