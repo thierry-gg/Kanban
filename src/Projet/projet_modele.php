@@ -23,9 +23,8 @@ class Projet_modele extends Connexion {
     }
 
     public function autoAttributionUtilisateur($idprojet){
-        $requete = self::$bdd->prepare('
-        INSERT INTO est_responsable_de (id_projet, id_utilisateur) VALUES (?, ?)');
-        $requete->execute([$idprojet, $_SESSION['id_utilisateur']]);
+        $requete = self::$bdd->prepare('INSERT INTO est_responsable_de (id_projet, id_utilisateur, role) VALUES (?, ?, ?)');
+        $requete->execute([$idprojet, $_SESSION['id_utilisateur'], 'admin']);
     }
 
     public function autoAttributionColonne($idprojet){
@@ -87,4 +86,5 @@ class Projet_modele extends Connexion {
         $requete->execute([$id_projet]);
         return $requete->fetch();
     }
+
 }

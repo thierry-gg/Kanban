@@ -1,8 +1,6 @@
 <?php
 include("utilisateur_modele.php");
 include("utilisateur_vue.php");
-
-
 class Utilisateur_controleur {
 
     private $vue;

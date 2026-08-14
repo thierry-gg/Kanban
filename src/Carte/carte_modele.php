@@ -117,7 +117,6 @@ class Carte_modele extends Connexion {
         }
         return true;
     }
-
     public function cartesQuiDependentDe($idCarte){
         $requete = self::$bdd->prepare("SELECT c.id_carte, c.titre_carte FROM depend_de d
         INNER JOIN carte c ON d.id_carte = c.id_carte WHERE d.id_carte_dependante = ?");
@@ -176,6 +175,12 @@ class Carte_modele extends Connexion {
         $requete = self::$bdd->prepare("UPDATE carte SET id_colonne = ? WHERE id_carte = ?");
         $requete->execute([$nouvelleColonne['id_colonne'], $idCarte]);
         return $nouvelleColonne['libelle'];
+    }
+    public function getResponsableCarte($idCarte){
+        $requete = self::$bdd->prepare("SELECT id_utilisateur FROM carte WHERE id_carte = ?");
+        $requete->execute([$idCarte]);
+        $resultat = $requete->fetch();
+        return $resultat ? $resultat['id_utilisateur'] : null;
     }
 
 }

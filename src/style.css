@@ -385,3 +385,26 @@ hr {
     .colonne { width: 100%; }
     .carte, .carte:nth-child(even) { transform: none; }
 }
+
+.actions-projet {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    width: fit-content;
+    margin: 16px auto;
+    padding: 30px 30px;
+    background: var(--bg-ardoise-clair);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--rayon);
+}
+.actions-projet form {
+    display: block;
+    margin: 0;
+}
+
+.actions-projet button {
+    margin: 0;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+}

@@ -30,8 +30,8 @@ class Utilisateur_modele extends Connexion{
             return false;
         }
 
-        $requete = self::$bdd->prepare('INSERT INTO est_responsable_de (id_projet, id_utilisateur) VALUES (?, ?)');
-        $requete->execute([$idProjet, $utilisateur['id_utilisateur']]);
+        $requete = self::$bdd->prepare('INSERT INTO est_responsable_de (id_projet, id_utilisateur, role) VALUES (?, ?, ?)');
+        $requete->execute([$idProjet, $utilisateur['id_utilisateur'], 'editeur']);
         return true;
     }
     public function getUtilisateursAvecRole($idProjet){
@@ -62,6 +62,12 @@ class Utilisateur_modele extends Connexion{
             $requete->execute([$role, $idProjet, $idUtilisateur]);
         }
         return true;
+    }
+    public function getRole($idProjet, $idUtilisateur){
+        $requete = self::$bdd->prepare("SELECT role FROM est_responsable_de WHERE id_projet = ? AND id_utilisateur = ?");
+        $requete->execute([$idProjet, $idUtilisateur]);
+        $resultat = $requete->fetch();
+        return $resultat ? $resultat['role'] : null;
     }
 
 }

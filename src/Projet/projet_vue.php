@@ -2,7 +2,7 @@
 
 class Projet_vue{
 
-    public function accueilProjet($projets, $utilisateursParProjet){
+    public function accueilProjet($projets, $utilisateursParProjet, $rolesParProjet){
 
         echo'<h1>Bonjour '.$_SESSION['nom'].' !</h1>
          <h2>Liste des projets</h2>';
@@ -13,6 +13,9 @@ class Projet_vue{
         } else {
             echo '<div class="listeProjets">';
             foreach ($projets as $projet) {
+
+                $roleProjet = $rolesParProjet[$projet['id_projet']] ?? null;
+                $estAdmin = ($roleProjet === 'admin');
 
                 if ($projet['fini_le'] !== NULL) {
                     $statut = "Terminé";
@@ -54,7 +57,7 @@ class Projet_vue{
                             value="'.htmlspecialchars($projet['description_projet']).'" style="display:none;">    
                         </p>   
                         
-                        <p>Statut : '.$statut.'</p>
+                        <p>Statut : '.$statut.' </p>
     
                         <div id="blocInfo'.$projet['id_projet'].'" style="display:none; border:1px solid #ccc; padding:10px; margin-top:5px; margin-bottom:10px">
                             <p><strong>Description :</strong> '.($projet['description_projet'] !== '' ? htmlspecialchars($projet['description_projet']) : "Aucune description").'</p>
@@ -63,7 +66,7 @@ class Projet_vue{
                     </form>
                 </div>';
 
-                if (!$estTermine) {
+                if (!$estTermine && $estAdmin) {
                     echo '
                     <button type="button" id="btnEditerProjet'.$projet['id_projet'].'" onclick="editer('.$projet['id_projet'].')">Éditer</button>
                     <button type="button" id="btnEditerAnnuler'.$projet['id_projet'].'" style="display:none;" 
@@ -74,7 +77,8 @@ class Projet_vue{
                 ';
                 }
                 echo '</form>';
-                if (!$estTermine) {
+
+                if (!$estTermine && $estAdmin) {
                     echo '<br><br>
                     <form action="index.php?module=utilisateur&action=formAjoutUtilisateur" method="POST" style="display:inline;">
                         <input type="hidden" name="id_projet" value="'.$projet['id_projet'].'">                    
@@ -111,7 +115,8 @@ class Projet_vue{
                         document.getElementById("btnEditerValider" + id).style.display = "inline";
                         document.getElementById("btnEditerAnnuler" + id).style.display = "inline";
                         
-                        document.getElementById("btnTerminerProjet" + id).style.display = "inline";
+                        var btnTerminer = document.getElementById("btnTerminerProjet" + id);
+                        if (btnTerminer) btnTerminer.style.display = "inline";
                     }
         
                     function annuler(id, bouton) {
@@ -131,7 +136,8 @@ class Projet_vue{
                         
                         document.getElementById("btnEditerAnnuler" + id).style.display = "none";
                         
-                        document.getElementById("btnTerminerProjet" + id).style.display = "none";
+                        var btnTerminer = document.getElementById("btnTerminerProjet" + id);
+                        if (btnTerminer) btnTerminer.style.display = "none";
         
                     }
                 </script>';
@@ -153,28 +159,36 @@ class Projet_vue{
         ';
     }
 
-
-    public function afficherProjet($projets, $cartes){
+    public function afficherProjet($projets, $cartes, $role, $id_utilisateur){
 
         $estTermine = isset($projets['fini_le']) && $projets['fini_le'] !== NULL;
-
+        $modeLectureSeule = ($role === 'modeLecture');
+        $lectureSeule = $estTermine || $modeLectureSeule;
+        $estAdmin = ($role === 'admin');
         $colonnes = [
             "A faire" => "",
             "En cours" => "",
             "Terminé" => ""
         ];
-        if (!$estTermine) {
+        echo'<div class="actions-projet">';
+        if (!$lectureSeule) {
             echo'<form action="index.php?module=carte&action=formCarte&id_projet='.$projets['id_projet'].'" method="POST">
                     <input type="hidden" name="id_projet" value="'.$projets['id_projet'].'">
                     <button type="submit" value="creeCarte">Créé une carte</button>
-                  </form>
-                  <form action="index.php?module=utilisateur&action=formGestionDroit&id_projet='.$projets['id_projet'].'" method="POST">
+                  </form>';
+        }
+        if ($estAdmin) {
+            echo '<form action="index.php?module=utilisateur&action=formGestionDroit&id_projet='.$projets['id_projet'].'" method="POST">
                     <input type="hidden" name="gestionDroit" value="'.$projets['id_projet'].'">
                     <button type="submit" value="gestionDroit">Gestion des droits</button>
-                  </form><br>
-                  ';
+                  </form><br>';
         }
+        echo'</div>';
+
         foreach ($cartes as $carte) {
+
+            $peutEditerCarte = !$lectureSeule
+                && ($estAdmin || ($role === 'editeur' && $carte['id_utilisateur'] == $id_utilisateur));
 
             $boutonsEdition = '';
             $boutonsAssignerDependanceCarte = '';
@@ -201,6 +215,7 @@ class Projet_vue{
                     <p><strong>Responsable :</strong> '.($carte['nom'] !== NULL ? htmlspecialchars($carte['nom']) : "Aucun responsable").'</p>
                     <p><strong>Dependes de :</strong> '.$texteDependances.'</p>
                 </div>';
+
             if (!$estTermine) {
                 if ($carte['deadline'] !== null && $carte['fini_le'] === null) {
                     $aujourdHui = new DateTime('today');
@@ -218,7 +233,9 @@ class Projet_vue{
                         $badgeDeadline = "<p style='color:orange;font-weight:bold;'>Deadline proche !</p>";
                     }
                 }
+            }
 
+            if ($peutEditerCarte) {
                 $boutonsEdition = '
                     <button type="button" id="btnEditerCarte'.$carte['id_carte'].'" onclick="editer('.$carte['id_carte'].')">Éditer</button>
                     
@@ -230,6 +247,18 @@ class Projet_vue{
                     <input type="submit" id="btnEditerValider'.$carte['id_carte'].'" value="Valider" style="display:none;" name="validerEditerCarte"><br><br>            
                 ';
 
+                $boutonsDeplacementCarte = '
+                    <div class="deplacementCarte">
+                        <form action="index.php?module=carte&action=changerColonne" method="POST">
+                            <input type="hidden" name="id_carte" value="'.$carte['id_carte'].'">
+                            <input type="hidden" name="id_colonne" value="'.$carte['id_colonne'].'">
+                            <button name="direction" value="gauche">←</button>                    
+                            <button name="direction" value="droite">→</button>
+                        </form>
+                    </div>';
+            }
+
+            if ($estAdmin && !$lectureSeule) {
                 $boutonsAssignerDependanceCarte = '
                 <div class="boutonCarteAssigner">
                     <form action="index.php?module=carte&action=formUtilisateurCarte" method="POST">
@@ -252,17 +281,8 @@ class Projet_vue{
                     </form>
                 </div>
                 ';
-
-                $boutonsDeplacementCarte = '
-                    <div class="deplacementCarte">
-                        <form action="index.php?module=carte&action=changerColonne" method="POST">
-                            <input type="hidden" name="id_carte" value="'.$carte['id_carte'].'">
-                            <input type="hidden" name="id_colonne" value="'.$carte['id_colonne'].'">
-                            <button name="direction" value="gauche">←</button>                    
-                            <button name="direction" value="droite">→</button>
-                        </form>
-                    </div>';
             }
+
             $colonnes[$carte['libelle']] .= '
             <div class="carte">
                 '.$boutonsDeplacementCarte.'
@@ -302,6 +322,8 @@ class Projet_vue{
 
         if ($estTermine) {
             echo '<p><em>Ce projet est terminé - plus aucune modification est possible.</em></p>';
+        } elseif ($modeLectureSeule) {
+            echo '<p><em>Vous êtes en spéctateur sur ce projet.</em></p>';
         }
 
         echo '           
@@ -348,7 +370,10 @@ class Projet_vue{
                 
                 document.getElementById("btnEditerCarte" + id).style.display = "none";
                 document.getElementById("btnEditerValider" + id).style.display = "inline";
-                document.getElementById("btnEditerSupprimer" + id).style.display = "inline";    
+                
+                var btnSupprimer = document.getElementById("btnEditerSupprimer" + id);
+                if (btnSupprimer) btnSupprimer.style.display = "inline";
+                
                 document.getElementById("btnEditerAnnuler" + id).style.display = "inline"; 
             }
             
@@ -369,7 +394,10 @@ class Projet_vue{
                 
                 document.getElementById("btnEditerCarte" + id).style.display = "inline";
                 document.getElementById("btnEditerValider" + id).style.display = "none";
-                document.getElementById("btnEditerSupprimer" + id).style.display = "none";    
+                
+                var btnSupprimer = document.getElementById("btnEditerSupprimer" + id);
+                if (btnSupprimer) btnSupprimer.style.display = "none";
+                
                 document.getElementById("btnEditerAnnuler" + id).style.display = "none";
             }
         </script>
