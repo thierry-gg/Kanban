@@ -251,8 +251,8 @@ body > form br { display: none; }
     align-content: start;
     flex: 1;
     min-width: 200px;
-    background: rgba(255,255,255,0.03);
-    border: 1px dashed rgba(255,255,255,0.18);
+    background: #fff;
+    border: 2px rgba(0,0,0);
     border-radius: var(--rayon);
     padding: 10px;
 }
@@ -263,11 +263,11 @@ body > form br { display: none; }
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--encre-douce);
+    color: #000;
     text-align: center;
     margin: 0 0 14px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.12);
+    border-bottom: 1px solid #000;
 }
 
 .colonne p { grid-column: 1 / -1; color: var(--encre-douce); text-align: center; font-size: 0.82rem; }
@@ -371,7 +371,7 @@ hr {
 }
 
 ::selection {
-    background: var(--teal-fonce);
+    background: #27ADF5;
     color: var(--papier);
 }
 

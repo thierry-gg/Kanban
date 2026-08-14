@@ -167,7 +167,12 @@ class Projet_vue{
             echo'<form action="index.php?module=carte&action=formCarte&id_projet='.$projets['id_projet'].'" method="POST">
                     <input type="hidden" name="id_projet" value="'.$projets['id_projet'].'">
                     <button type="submit" value="creeCarte">Créé une carte</button>
-                  </form><br>';
+                  </form>
+                  <form action="index.php?module=utilisateur&action=formGestionDroit&id_projet='.$projets['id_projet'].'" method="POST">
+                    <input type="hidden" name="gestionDroit" value="'.$projets['id_projet'].'">
+                    <button type="submit" value="gestionDroit">Gestion des droits</button>
+                  </form><br>
+                  ';
         }
         foreach ($cartes as $carte) {
 
@@ -198,10 +203,18 @@ class Projet_vue{
                 </div>';
             if (!$estTermine) {
                 if ($carte['deadline'] !== null && $carte['fini_le'] === null) {
-                    $heuresRestantes = (strtotime($carte['deadline']) - time()) / 3600;
-                    if ($heuresRestantes < 0) {
+                    $aujourdHui = new DateTime('today');
+                    $deadline = new DateTime($carte['deadline']);
+
+                    $joursRestants = (int)$aujourdHui->diff($deadline)->format('%r%a');
+
+                    if ($joursRestants < 0) {
                         $badgeDeadline = "<p style='color:red;font-weight:bold;'>Deadline dépassée !</p>";
-                    } elseif ($heuresRestantes < 48) {
+
+                    } elseif ($joursRestants === 0) {
+                        $badgeDeadline = "<p style='color:orange;font-weight:bold;'>À terminer aujourd'hui !</p>";
+
+                    } elseif ($joursRestants <= 2) {
                         $badgeDeadline = "<p style='color:orange;font-weight:bold;'>Deadline proche !</p>";
                     }
                 }

@@ -50,5 +50,36 @@ class Utilisateur_vue{
         ';
     }
 
-}
+    public function formGestionDroit($utilisateurs, $idProjet){
+        echo '<h1>Gestion des droits</h1>';
+        echo '<form action="index.php?module=utilisateur&action=modifierRoles" method="POST">';
+        echo '<input type="hidden" name="id_projet" value="'.$idProjet.'">';
+        foreach ($utilisateurs as $utilisateur) {
+            echo '
+                <div class="utilisateur">
+                    <strong>'.htmlspecialchars($utilisateur['nom']).'</strong>
+                    <select name="roles['.$utilisateur['id_utilisateur'].']">
+                        <option value="admin" '
+                        .($utilisateur['role'] === 'admin' ? 'selected' : '').'>
+                            Administrateur
+                        </option>
+        
+                        <option value="editeur" '
+                        .($utilisateur['role'] === 'editeur' ? 'selected' : '').'>
+                            Éditeur
+                        </option>
+        
+                        <option value="modeLecture" '
+                        .($utilisateur['role'] === 'modeLecture' ? 'selected' : '').'>
+                            Observateur
+                        </option>
+                    </select>
+                </div>';
+        }
 
+        echo '
+                <a href="index.php?module=projet&action=afficherProjet&id='.$idProjet.'"><button type="button">Retour</button></a>
+                <input type="submit" name="validerRoles" Value="Valider">
+        </form>';
+    }
+}

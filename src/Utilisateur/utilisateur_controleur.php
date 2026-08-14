@@ -16,7 +16,7 @@ class Utilisateur_controleur {
     }
 
     public function exec(){
-        switch($this->action){
+        switch($this->action) {
             case "formProfile":
                 $this->vue->formProfile();
                 break;
@@ -30,7 +30,7 @@ class Utilisateur_controleur {
 
             case "supprimerProfile":
                 $this->modele->supprimerProfile($_SESSION['id_utilisateur']);
-                if(session_destroy()){
+                if (session_destroy()) {
                     header('Location: index.php');
                 }
                 break;
@@ -45,12 +45,24 @@ class Utilisateur_controleur {
                 $idProjet = $_POST['id_projet'];
                 $ajouterUtilisateur = $this->modele->ajouterUtilisateurProjet($nom, $idProjet);
 
-                if($ajouterUtilisateur === false){
-                    echo'<br>Aucun utilisateur trouvé<br>';
+                if ($ajouterUtilisateur === false) {
+                    echo '<br>Aucun utilisateur trouvé<br>';
                     $this->vue->formAjouterUtilisateurProjet($idProjet);
-                }else{
+                } else {
                     header("Location: index.php?");
                 }
+                break;
+
+            case "formGestionDroit":
+                $idProjet = $_SESSION['id_projet'];
+                $utilisateurs = $this->modele->getUtilisateursAvecRole($idProjet);
+                $this->vue->formGestionDroit($utilisateurs, $idProjet);
+                break;
+
+            case "modifierRoles":
+                $idProjet = $_POST['id_projet'];
+                $this->modele->modifierRoles($idProjet);
+                header("Location: index.php?module=projet&action=afficherProjet&id='.$idProjet.'");
                 break;
         }
     }

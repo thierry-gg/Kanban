@@ -34,4 +34,28 @@ class Utilisateur_modele extends Connexion{
         $requete->execute([$idProjet, $utilisateur['id_utilisateur']]);
         return true;
     }
+    public function getUtilisateursAvecRole($idProjet){
+        $requete = self::$bdd->prepare('SELECT u.id_utilisateur, u.nom, er.role
+         FROM utilisateur u INNER JOIN est_responsable_de er ON u.id_utilisateur = er.id_utilisateur
+         WHERE er.id_projet = ? ORDER BY u.nom');
+
+        $requete->execute([$idProjet]);
+        return $requete->fetchAll();
+    }
+
+    public function modifierRoles($idProjet){
+        if (!isset($_POST['validerRoles']) || !isset($_POST['roles'])) {
+            return;
+        }
+        $rolesAutorises = ['admin', 'editeur', 'modeLecture'];
+        foreach ($_POST['roles'] as $idUtilisateur => $role) {
+            if (!in_array($role, $rolesAutorises, true)) {
+                continue;
+            }
+            $requete = self::$bdd->prepare('UPDATE est_responsable_de SET role = ? WHERE id_projet = ? AND id_utilisateur = ?');
+
+            $requete->execute([$role, $idProjet, $idUtilisateur]);
+        }
+    }
+
 }
