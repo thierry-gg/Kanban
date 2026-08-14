@@ -45,17 +45,23 @@ class Utilisateur_modele extends Connexion{
 
     public function modifierRoles($idProjet){
         if (!isset($_POST['validerRoles']) || !isset($_POST['roles'])) {
-            return;
+            return false;
         }
+        $roles = $_POST['roles'];
         $rolesAutorises = ['admin', 'editeur', 'modeLecture'];
-        foreach ($_POST['roles'] as $idUtilisateur => $role) {
+        foreach ($roles as $role) {
             if (!in_array($role, $rolesAutorises, true)) {
-                continue;
+                return false;
             }
+        }
+        if (!in_array('admin', $roles, true)) {
+            return false;
+        }
+        foreach ($roles as $idUtilisateur => $role) {
             $requete = self::$bdd->prepare('UPDATE est_responsable_de SET role = ? WHERE id_projet = ? AND id_utilisateur = ?');
-
             $requete->execute([$role, $idProjet, $idUtilisateur]);
         }
+        return true;
     }
 
 }

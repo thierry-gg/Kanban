@@ -54,16 +54,22 @@ class Utilisateur_controleur {
                 break;
 
             case "formGestionDroit":
-                $idProjet = $_SESSION['id_projet'];
+                $idProjet = $_GET['id_projet'];
                 $utilisateurs = $this->modele->getUtilisateursAvecRole($idProjet);
                 $this->vue->formGestionDroit($utilisateurs, $idProjet);
                 break;
 
             case "modifierRoles":
                 $idProjet = $_POST['id_projet'];
-                $this->modele->modifierRoles($idProjet);
-                header("Location: index.php?module=projet&action=afficherProjet&id='.$idProjet.'");
-                break;
+                $modification = $this->modele->modifierRoles($idProjet);
+                if ($modification === false) {
+                    echo "Impossible, au moins une personne doit être administrateur.";
+                    $utilisateurs = $this->modele->getUtilisateursAvecRole($idProjet);
+                    $this->vue->formGestionDroit($utilisateurs, $idProjet);
+                    break;
+                }
+                header("Location: index.php?module=projet&action=afficherProjet&id=".$idProjet);
+                exit;
         }
     }
 
