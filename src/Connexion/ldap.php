@@ -1,7 +1,7 @@
 <?php
 
 class LDAP{
-
+/*
     public function connexion_ldap($identifiant, $motDePasse){
         $ldap = ldap_connect("");
         ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
@@ -12,6 +12,7 @@ class LDAP{
             return false;
         }
     }
+*/
 }
 
 ?>

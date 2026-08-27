@@ -2,7 +2,8 @@
 include_once "connexion.php";
 class Carte_modele extends Connexion {
 
-
+    // Quand l'utilisateur créé une carte, la fonction récupère le titre, la description, et la date
+    // et l'implémenter dans la base de donnée
     public function creerCarte($idProjet) {
         $titre = $_POST['titre_carte'];
         $description = $_POST['description_carte'];
@@ -23,6 +24,7 @@ class Carte_modele extends Connexion {
         return self::$bdd->lastInsertId();
     }
 
+    // Quand la carte se trouve dans la colonne "Terminé", la fonction met à jour dans la base de donnée le tuple fini_le
     public function etatCarteTerminer($idCarte){
         $date = date('Y-m-d H:i:s');
 
@@ -30,12 +32,15 @@ class Carte_modele extends Connexion {
         $requete->execute([$date, $idCarte]);
     }
 
+    // Quand la carte n'est pas fini, la fonction met en NULL le tuple fini_le
     public function etatCartePasTerminer($idCarte){
         $requete = self::$bdd->prepare("UPDATE carte SET fini_le = NULL WHERE id_carte = ?");
 
         $requete->execute([$idCarte]);
     }
 
+    // Quand l'utilisateur edite une carte et valide
+    // cette fonction va mettre à jour toute les modifications apporter a la carte dans la base de donnée
     public function editerCarte($idCarte, $titre, $description, $dateLimite){
         if ($dateLimite == "") {
             $dateLimite = NULL;
@@ -58,6 +63,7 @@ class Carte_modele extends Connexion {
         return true;
     }
 
+    // Permet d'obtenir tous les cartes d'une seul colonne et de les tiers par l'id de la carte
     public function getCartes($idProjet){
         $requete = self::$bdd->prepare("SELECT c.*, col.libelle, u.nom AS nom FROM carte c
         INNER JOIN colonne col ON c.id_colonne = col.id_colonne
@@ -67,12 +73,14 @@ class Carte_modele extends Connexion {
         return $requete->fetchAll();
     }
 
+    // Quand un utilisateur créé une carte, il sera automatiquement le responsable
     public function assignerUtilisateurCarte($idCarte, $idUtilisateur){
         $requete = self::$bdd->prepare("UPDATE carte SET id_utilisateur = ? WHERE id_carte = ?");
         $requete->execute([$idUtilisateur, $idCarte]);
     }
 
-    public function getAllUtilisateurCarte($idProjet){
+    // Permet d'obtenir l'utilisateur responsable de la carte selon le projet
+    public function getUtilisateurCarte($idProjet){
         $requete = self::$bdd->prepare("
         SELECT u.id_utilisateur, u.nom FROM utilisateur u
         INNER JOIN est_responsable_de erd ON u.id_utilisateur = erd.id_utilisateur
@@ -83,12 +91,15 @@ class Carte_modele extends Connexion {
         return $requete->fetchAll();
     }
 
+    // Permet d'obtenir tous les cartes d'un projet
     public function getAllCartes($idCarte, $idProjet){
         $requete = self::$bdd->prepare("SELECT id_carte, titre_carte FROM carte WHERE id_projet = ? AND id_carte != ?");
         $requete->execute([$idProjet, $idCarte]);
         return $requete->fetchAll();
     }
 
+    // Permet de définir une dépendance sur une carte si la carte dont elle dépendant
+    // ne possède pas une date inférieur à la sienne
     public function ajouterDependance($idCarte, $idCarteDependante){
         $requeteVerif = self::$bdd->prepare("SELECT * FROM depend_de WHERE id_carte = ? AND id_carte_dependante = ?");
         $requeteVerif->execute([$idCarte, $idCarteDependante]);
@@ -112,6 +123,7 @@ class Carte_modele extends Connexion {
         return true;
     }
 
+    // Permet d'avoir la colonne (libelle) selon la carte
     public function verifDependance($idCarte){
 
         $requete = self::$bdd->prepare("SELECT col_dep.libelle AS colonne_dependante FROM depend_de d
@@ -127,6 +139,9 @@ class Carte_modele extends Connexion {
         }
         return true;
     }
+
+    // Permet d'obtenir les cartes qui dépendent de la carte donnée
+    // Exemple : Carte A depend_de Carte B alors Carte B sera selectionné
     public function cartesQuiDependentDe($idCarte){
         $requete = self::$bdd->prepare("SELECT c.id_carte, c.titre_carte FROM depend_de d
         INNER JOIN carte c ON d.id_carte = c.id_carte WHERE d.id_carte_dependante = ?");
@@ -134,6 +149,8 @@ class Carte_modele extends Connexion {
         return $requete->fetchAll();
     }
 
+    // Permet d'obtenir les cartes dont depent la carte donnée
+    // Exemple : Carte A depend_de Carte B alors Carte A sera selectionné
     public function getDependancesCarte($idCarte){
         $requete = self::$bdd->prepare("SELECT c.id_carte, c.titre_carte FROM depend_de d
         INNER JOIN carte c ON d.id_carte_dependante = c.id_carte WHERE d.id_carte = ?");
@@ -141,6 +158,7 @@ class Carte_modele extends Connexion {
         return $requete->fetchAll();
     }
 
+    // Supprime une carte du projet, et met à jour la base de donnée
     public function supprimerCarte($idCarte){
         $dependants = $this->cartesQuiDependentDe($idCarte);
         if (count($dependants) > 0) {
@@ -153,11 +171,14 @@ class Carte_modele extends Connexion {
         return true;
     }
 
+    // Supprime une dépendance d'une carte donnée
     public function supprimerDependanceCarte($idCarte, $idCarteDependante){
         $requete = self::$bdd->prepare("DELETE FROM depend_de WHERE id_carte = ? AND id_carte_dependante = ?");
         return $requete->execute([$idCarte, $idCarteDependante]);
     }
 
+    // Permet de déplacer une carte vers la colonne précédente ou suivante.
+    // La fonction vérifie aussi les dépendances avant de déplacer une carte vers la colonne "Terminé".
     public function changerColonne($idCarte, $direction){
         $requete = self::$bdd->prepare("SELECT c.id_colonne, c.id_projet, col.libelle FROM carte c
         INNER JOIN colonne col ON c.id_colonne = col.id_colonne WHERE c.id_carte = ?");
@@ -186,6 +207,8 @@ class Carte_modele extends Connexion {
         $requete->execute([$nouvelleColonne['id_colonne'], $idCarte]);
         return $nouvelleColonne['libelle'];
     }
+
+    // Permet d'avoir selement l'id de l'utilisateur responsable de la carte donnée
     public function getResponsableCarte($idCarte){
         $requete = self::$bdd->prepare("SELECT id_utilisateur FROM carte WHERE id_carte = ?");
         $requete->execute([$idCarte]);
@@ -193,12 +216,16 @@ class Carte_modele extends Connexion {
         return $resultat ? $resultat['id_utilisateur'] : null;
     }
 
+    // Permet d'obtenir la deadline d'un projet
     public function getDeadlineProjet($idProjet){
         $requete = self::$bdd->prepare("SELECT deadline FROM projet WHERE id_projet = ?");
         $requete->execute([$idProjet]);
         $resultat = $requete->fetch();
         return $resultat ? $resultat['deadline'] : null;
     }
+
+    // Permet au carte de ne pas dépassé la deadline du projet
+    // si le projet ne possède pas de deadline, les cartes n'auront pas de limite de temps / deadline
     public function deadlineValidePourProjet($idProjet, $deadlineCarte){
         if (empty($deadlineCarte)) return true;
         $deadlineProjet = $this->getDeadlineProjet($idProjet);
@@ -206,6 +233,8 @@ class Carte_modele extends Connexion {
         return strtotime($deadlineCarte) <= strtotime($deadlineProjet);
     }
 
+    // Permet au carte dépendante d'être affecter a une autre carte
+    // si selement la carte dépendante n'est pas suppérieur a la carte dont elle dépend
     public function deadlineValidePourDependances($idCarte, $nouvelleDeadline){
         if (empty($nouvelleDeadline)) return true;
         $dependances = $this->getDependancesCarte($idCarte);

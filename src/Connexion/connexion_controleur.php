@@ -8,13 +8,13 @@ class Connexion_controleur{
     private $vue;
     private $modele;
     private $action;
-    private $ldap;
+//    private $ldap;
 
     public function __construct(){
         $this->vue = new Connexion_vue();
         $this->modele = new Connexion_modele();
         $this->action = isset($_GET["action"]) ? $_GET["action"]: "default";
-        $this->ldap = new LDAP();
+//        $this->ldap = new LDAP();
     }
 
     public function exec(){

@@ -5,8 +5,8 @@ class Projet_modele extends Connexion {
 
     public function __construct() {}
 
-    // Quand l'utilisateur créé un projet, on va récuperer son titre, sa description, sa deadline
-    // et on va l'implémenter dans la base de données
+    // Quand l'utilisateur créé un projet, la fonction va récuperer son titre, sa description, sa deadline
+    // et l'implémenter dans la base de données
     public function ajoutProjet(){
 
         $titreProjet = $_POST['titre_projet'];

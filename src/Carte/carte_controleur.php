@@ -123,7 +123,7 @@ class Carte_controleur {
                     echo "<script>alert('Accès refusé.');window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';</script>";
                     exit;
                 }
-                $membreActuel = $this->modele->getAllUtilisateurCarte($idProjet);
+                $membreActuel = $this->modele->getUtilisateurCarte($idProjet);
                 $this->vue->formUtilisateurCarte($idProjet, $idCarte, $membreActuel);
                 break;
 
