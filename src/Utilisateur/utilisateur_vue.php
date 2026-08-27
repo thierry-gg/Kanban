@@ -2,6 +2,7 @@
 
 class Utilisateur_vue{
 
+    // Formualire dans le profil, permet de changer le nom de l'utilisateur ou de supprimer le compte
     public function formProfile()
     {
         echo '
@@ -17,16 +18,15 @@ class Utilisateur_vue{
                 style="display:none;">
     
                 <button type="button" id="btnModifier" onclick="modifier()">Modifier</button>
+                <input type="submit" id="btnAnnuler" value="Annuler" style="display:none;" name="annuler_utilisateur">
                 <input type="submit" id="btnValider" value="Valider" style="display:none;" name="valider_utilisateur">
                 
             </p>
         </form>
         <form action="index.php?module=utilisateur&action=supprimerProfile" method="POST">
-            <button type="submit" id="btnSupprimer">Supprimer le compte</button>
-            
+            <a href="index.php"><button type="button">Retour</button></a>
+            <button type="submit" id="btnSupprimer">Supprimer le compte</button>                     
         </form><br>  
-        <a href="index.php"><button type="button">Retour</button></a>
-    
     <script>
         function modifier() {
             document.getElementById("nomAffiche").style.display = "none";
@@ -38,6 +38,7 @@ class Utilisateur_vue{
         ';
     }
 
+    // Formulaire pour ajouter un utilisateur a un projet
     public function formAjouterUtilisateurProjet($idProjet){
         echo'<br>
             <form action="index.php?module=utilisateur&action=ajouterUtilisateurProjet" method="POST">
@@ -50,6 +51,7 @@ class Utilisateur_vue{
         ';
     }
 
+    // Formulaire pour la page Gestion des droits, dans le projet, définir le role de(s) utilisateur
     public function formGestionDroit($utilisateurs, $idProjet){
         echo '<h1>Gestion des droits</h1>';
         echo '<form action="index.php?module=utilisateur&action=modifierRoles" method="POST">';

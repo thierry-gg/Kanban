@@ -42,24 +42,48 @@ class Carte_controleur {
             case "carte":
                 $idProjet = $_SESSION['id_projet'];
                 $role = $this->utilisateurModele->getRole($idProjet, $_SESSION['id_utilisateur']);
-                if ($role === 'modeLecture') { exit; } // sécurité si quelqu'un force l'appel
-                $this->modele->creerCarte($idProjet);
+                if ($role === 'modeLecture') {
+                    exit;
+                }
+                $resultat = $this->modele->creerCarte($idProjet);
+                if ($resultat === "deadline_hors_projet") {
+                    echo "<script>
+                            alert('La date limite de la carte ne peut pas dépasser celle du projet.');
+                            window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';
+                        </script>";
+                    exit;
+                }
                 header("Location: index.php?module=projet&action=afficherProjet&id=".$idProjet);
                 break;
 
             case "editerCarte":
                 $idCarte = $_POST['id_carte'];
                 $idProjet = $_SESSION['id_projet'];
-
                 if (!$this->peutEditerCarte($idCarte)) {
-                    echo "<script>alert('Vous n\\'avez pas les droits pour modifier cette carte.');window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';</script>";
+                    echo "<script>
+                            alert('Vous n\\'avez pas les droits pour modifier cette carte.');
+                            window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';
+                        </script>";
                     exit;
                 }
-
                 $nvTitreCarte = $_POST['titre_carte'];
                 $nvDescriptionCarte = $_POST['description_carte'];
                 $nvDeadLine = $_POST['deadline_carte'];
-                $this->modele->editerCarte($idCarte, $nvTitreCarte, $nvDescriptionCarte, $nvDeadLine);
+                $resultat = $this->modele->editerCarte($idCarte, $nvTitreCarte, $nvDescriptionCarte, $nvDeadLine);
+                if ($resultat === "deadline_hors_projet") {
+                    echo "<script>
+                            alert('La date limite de la carte ne peut pas dépasser celle du projet.');
+                            window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';
+                        </script>";
+                    exit;
+                }
+                if ($resultat === "deadline_incoherente_dependance") {
+                    echo "<script>
+                            alert('La date limite ne peut pas dépasser celle d\\'une carte dont celle-ci dépend.');
+                            window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';
+                        </script>";
+                    exit;
+                }
                 header("Location: index.php?module=projet&action=afficherProjet&id=".$idProjet);
                 break;
 
@@ -128,33 +152,34 @@ class Carte_controleur {
 
             case "ajouterDependanceCarte":
                 $idCarte = $_POST['id_carte'];
-                if (!$this->peutEditerCarte($idCarte)) {
-                    echo "<script>alert('Accès refusé.');window.location.href='index.php?module=projet&action=afficherProjet&id=".$_SESSION['id_projet']."';</script>";
+                $idProjet = $_SESSION['id_projet'];
+                $idCarteDependante = $_POST['id_carte_dependante'];
+                $resultat = $this->modele->ajouterDependance(
+                    $idCarte,
+                    $idCarteDependante
+                );
+                if ($resultat === "deadline_incoherente") {
+                    echo "<script>
+                            alert('Impossible : la date limite de cette carte dépasse celle de la carte dont elle dépendrait.');
+                            window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';
+                        </script>";
                     exit;
                 }
-                $idCarteDependante = $_POST['id_carte_dependante'];
-                $this->modele->ajouterDependance($idCarte, $idCarteDependante);
-                header("Location: index.php?module=projet&action=afficherProjet&id=".$_SESSION['id_projet']);
+                header("Location: index.php?module=projet&action=afficherProjet&id=".$idProjet);
                 break;
 
             case "supprimerDependanceCarte":
                 $idCarte = $_POST['id_carte'];
+                $idCarteDependante = $_POST['id_carte_dependante'];
                 $idProjet = $_SESSION['id_projet'];
-                if (!$this->peutEditerCarte($idCarte)) {
-                    echo "<script>alert('Vous n\\'avez pas les droits pour cette action.');window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';</script>";
-                    exit;
-                }
+
+                $this->modele->supprimerDependanceCarte($idCarte, $idCarteDependante);
+                header("Location: index.php?module=projet&action=afficherProjet&id=".$idProjet);
                 break;
 
             case "supprimerCarte":
                 $idCarte = $_POST['id_carte'];
                 $idProjet = $_SESSION['id_projet'];
-                $role = $this->utilisateurModele->getRole($idProjet, $_SESSION['id_utilisateur']);
-
-                if ($role !== 'admin') {
-                    echo "<script>alert('Seul l\\'administrateur peut supprimer une carte.');window.location.href='index.php?module=projet&action=afficherProjet&id=".$idProjet."';</script>";
-                    exit;
-                }
 
                 $succes = $this->modele->supprimerCarte($idCarte);
                 if (!$succes) {
@@ -163,7 +188,6 @@ class Carte_controleur {
                 }
                 header("Location: index.php?module=projet&action=afficherProjet&id=".$idProjet);
                 break;
-
             default:
                 break;
         }

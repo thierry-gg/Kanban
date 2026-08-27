@@ -2,6 +2,23 @@
 
 class Projet_vue{
 
+    // Formulaire de projet
+    public function formProjet(){
+        echo'<br>
+           <form action="index.php?module=projet&action=projet" method="POST">
+                <label>Titre :</label><br>
+                <input type="text" name="titre_projet" required><br><br>
+                <label>Description :</label><br>
+                <input type="text" name="description_projet"><br><br>
+                <label>Date de fin:</label><br>
+                <input type="date" name="date_projet"><br><br>
+                <a href="index.php"><button type="button">Retour</button></a>
+                <input type="submit" name="valider_projet" value="Valider">
+           </form> 
+        ';
+    }
+
+    // Affichage de la page d'accueil une fois connecter, page liste de projets
     public function accueilProjet($projets, $utilisateursParProjet, $rolesParProjet){
 
         echo'<h1>Bonjour '.$_SESSION['nom'].' !</h1>
@@ -17,18 +34,21 @@ class Projet_vue{
                 $roleProjet = $rolesParProjet[$projet['id_projet']] ?? null;
                 $estAdmin = ($roleProjet === 'admin');
 
+                // Permet de définir un status d'après l'état du projet grace a la deadline
                 if ($projet['fini_le'] !== NULL) {
                     $statut = "Terminé";
-                } elseif ($projet['deadline'] !== NULL && strtotime($projet['deadline']) < time()) {
+                } elseif ($projet['deadline'] !== NULL && strtotime(date('Y-m-d')) > strtotime($projet['deadline'])) {
                     $statut = "En retard";
                 } else {
                     $statut = "En cours";
                 }
                 $estTermine = $projet['fini_le'] !== NULL;
 
+                // Affiche la date de début / fin de projet
                 $dateDebut = date("d/m/Y", strtotime($projet['cree_le']));
                 $dateFin = $projet['deadline'] === NULL ? "Aucune date de prévue" : date("d/m/Y", strtotime($projet['deadline']));
 
+                // Affiche la liste des personnes responsable du projet
                 $listeUtilisateurs = "";
                 if (isset($utilisateursParProjet[$projet['id_projet']])) {
                     foreach ($utilisateursParProjet[$projet['id_projet']] as $utilisateur) {
@@ -37,6 +57,7 @@ class Projet_vue{
                     $listeUtilisateurs = rtrim($listeUtilisateurs, ', ');
                 }
 
+                // Affiche le bloc projet avec le boutons infos, accessible a tout les roles
                 echo'
                 <div class="projet">
                     <form action="index.php?module=projet&action=editerProjet" method="POST">
@@ -63,9 +84,9 @@ class Projet_vue{
                             <p><strong>Description :</strong> '.($projet['description_projet'] !== '' ? htmlspecialchars($projet['description_projet']) : "Aucune description").'</p>
                             <p><strong>Créé le :</strong> '.$dateDebut.'&emsp; <strong>Date limite :</strong> '.$dateFin.'</p>
                             <p><strong>Responsables :</strong> '.($listeUtilisateurs !== "" ? $listeUtilisateurs : "Aucun autre utilisateur").'</p>
-                    </form>
                 </div>';
 
+                // Seul l'administrateur peut accéder à l'édition de projet
                 if (!$estTermine && $estAdmin) {
                     echo '
                     <button type="button" id="btnEditerProjet'.$projet['id_projet'].'" onclick="editer('.$projet['id_projet'].')">Éditer</button>
@@ -78,13 +99,18 @@ class Projet_vue{
                 }
                 echo '</form>';
 
+                // Seul l'administrateur peut accéder à la suppression / clotûre du projet, visible depuis l'édition du projet
                 if (!$estTermine && $estAdmin) {
                     echo '<br><br>
                     <form action="index.php?module=utilisateur&action=formAjoutUtilisateur" method="POST" style="display:inline;">
                         <input type="hidden" name="id_projet" value="'.$projet['id_projet'].'">                    
                         <input type="submit" value="Ajouter des utilisateurs">
+                    </form><br><br>
+                    <form action="index.php?module=projet&action=supprimerProjet" method="POST" style="display:inline;"
+                    onsubmit="return confirm(\'Supprimer ce projet ?\\nCette action est irréversible !\')">
+                        <input type="hidden" name="id_projet" value="'.$projet['id_projet'].'">
+                        <input type="submit" id="btnSupprimerProjet'.$projet['id_projet'].'" style="display:none;" value="Supprimer">
                     </form>
-                    <br><br>
                     <form action="index.php?module=projet&action=terminerProjet" method="POST" style="display:inline;">
                         <input type="hidden" name="id_projet" value="'.$projet['id_projet'].'">
                         <button type="submit" id="btnTerminerProjet'.$projet['id_projet'].'" style="display:none;" onclick="return confirm(\'Mettre ce projet en terminé ? \n Il ne sera plus possible de le modifier par la suite !\')">Terminé</button>
@@ -93,8 +119,12 @@ class Projet_vue{
                 }
                 echo '</div>';
             }
+
+            // Lien pour créé un projet
             echo'</div>';
             echo'<br><a href="index.php?module=projet&action=formProjet">Créé un nouveau projet</a>';
+
+            // Ici, le javaScript qui permet d'afficher / masquer la description et les boutons des projets
             echo'
                 <script>
                     function toggleInfo(id) {
@@ -115,6 +145,8 @@ class Projet_vue{
                         document.getElementById("btnEditerValider" + id).style.display = "inline";
                         document.getElementById("btnEditerAnnuler" + id).style.display = "inline";
                         
+                        var btnSupprimer = document.getElementById("btnSupprimerProjet" + id);
+                        if (btnSupprimer) btnSupprimer.style.display = "inline";
                         var btnTerminer = document.getElementById("btnTerminerProjet" + id);
                         if (btnTerminer) btnTerminer.style.display = "inline";
                     }
@@ -136,29 +168,17 @@ class Projet_vue{
                         
                         document.getElementById("btnEditerAnnuler" + id).style.display = "none";
                         
+                        var btnSupprimer = document.getElementById("btnSupprimerProjet" + id);
+                        if (btnSupprimer) btnSupprimer.style.display = "none";
+                        
                         var btnTerminer = document.getElementById("btnTerminerProjet" + id);
                         if (btnTerminer) btnTerminer.style.display = "none";
-        
                     }
                 </script>';
         }
     }
 
-    public function formProjet(){
-        echo'<br>
-           <form action="index.php?module=projet&action=projet" method="POST">
-                <label>Titre :</label><br>
-                <input type="text" name="titre_projet" required><br><br>
-                <label>Description :</label><br>
-                <input type="text" name="description_projet"><br><br>
-                <label>Date de fin:</label><br>
-                <input type="date" name="date_projet"><br><br>
-                <a href="index.php"><button type="button">Retour</button></a>
-                <input type="submit" name="valider_projet" value="Valider">
-           </form> 
-        ';
-    }
-
+    // Affiche le tableau kanban + colonne + les cartes
     public function afficherProjet($projets, $cartes, $role, $id_utilisateur){
 
         $estTermine = isset($projets['fini_le']) && $projets['fini_le'] !== NULL;
@@ -170,14 +190,19 @@ class Projet_vue{
             "En cours" => "",
             "Terminé" => ""
         ];
+
         echo'<div class="actions-projet">';
+
+        // Permet de créé une carte si l'utilisateur n'est pas spectateur / observateur du projet
         if (!$lectureSeule) {
             echo'<form action="index.php?module=carte&action=formCarte&id_projet='.$projets['id_projet'].'" method="POST">
                     <input type="hidden" name="id_projet" value="'.$projets['id_projet'].'">
                     <button type="submit" value="creeCarte">Créé une carte</button>
                   </form>';
         }
-        if ($estAdmin) {
+
+        // Seul l'administrateur peut gérer les roles des utilisateurs présent dans le projet
+        if ($estAdmin & !$estTermine) {
             echo '<form action="index.php?module=utilisateur&action=formGestionDroit&id_projet='.$projets['id_projet'].'" method="POST">
                     <input type="hidden" name="gestionDroit" value="'.$projets['id_projet'].'">
                     <button type="submit" value="gestionDroit">Gestion des droits</button>
@@ -193,9 +218,9 @@ class Projet_vue{
             $boutonsEdition = '';
             $boutonsAssignerDependanceCarte = '';
             $boutonsDeplacementCarte = '';
-            $classeDeadline = '';
             $badgeDeadline = '';
-            $boutonSupprimer = '';
+            // $classeDeadline = '';
+            // $boutonSupprimer = '';
 
             $dependances = (new Carte_modele())->getDependancesCarte($carte['id_carte']);
             $texteDependances = "Aucune";
@@ -206,6 +231,8 @@ class Projet_vue{
                 }
                 $texteDependances = implode(", ", $liste);
             }
+
+            // Détail de la carte quand on click sur Infos
             $infosCarte = '
                 <div id="blocInfoCarte'.$carte['id_carte'].'" 
                     style="display:none; border:3px solid #ccc; padding:10px; margin-top:5px; margin-bottom:10px">
@@ -216,6 +243,7 @@ class Projet_vue{
                     <p><strong>Dependes de :</strong> '.$texteDependances.'</p>
                 </div>';
 
+            // Permet de prévenir visuelement les utilisateurs quand la deadline des cartes approches
             if (!$estTermine) {
                 if ($carte['deadline'] !== null && $carte['fini_le'] === null) {
                     $aujourdHui = new DateTime('today');
@@ -235,6 +263,7 @@ class Projet_vue{
                 }
             }
 
+            // Seul l'administrateur et l'éditeur responsable peut éditer et faire déplacer la carte
             if ($peutEditerCarte) {
                 $boutonsEdition = '
                     <button type="button" id="btnEditerCarte'.$carte['id_carte'].'" onclick="editer('.$carte['id_carte'].')">Éditer</button>
@@ -258,6 +287,7 @@ class Projet_vue{
                     </div>';
             }
 
+            // Seul l'administrateur peut "Assigner un responsalbe, Déclarer une dépendance, Supprimer la carte"
             if ($estAdmin && !$lectureSeule) {
                 $boutonsAssignerDependanceCarte = '
                 <div class="boutonCarteAssigner">
@@ -283,6 +313,7 @@ class Projet_vue{
                 ';
             }
 
+            // Le bloc de la carte et son affichage "Titre, Description, Infos"
             $colonnes[$carte['libelle']] .= '
             <div class="carte">
                 '.$boutonsDeplacementCarte.'
@@ -320,32 +351,32 @@ class Projet_vue{
             </div>';
         }
 
+        // Quand le projet est terminé ou si vous êtes spectateurs, vous aurez le message suivant
         if ($estTermine) {
             echo '<p><em>Ce projet est terminé - plus aucune modification est possible.</em></p>';
         } elseif ($modeLectureSeule) {
             echo '<p><em>Vous êtes en spéctateur sur ce projet.</em></p>';
         }
 
+        // Affichage des colonnes "A faire, En cours, Terminé"
         echo '           
         <div class="kanban">
             <div class="colonne">
                 <h2>À faire</h2>             
                 '.($colonnes["A faire"] !== "" ? $colonnes["A faire"] : "<p>Aucune carte</p>").'
-            </div>
-            <div class="separateur"></div>
-            
+            </div>            
             <div class="colonne">
                 <h2>En cours</h2>
                 '.($colonnes["En cours"] !== "" ? $colonnes["En cours"] : "<p>Aucune carte</p>").'
-            </div>
-            <div class="separateur"></div>
-            
+            </div>            
             <div class="colonne">
                 <h2>Terminé</h2>
                 '.($colonnes["Terminé"] !== "" ? $colonnes["Terminé"] : "<p>Aucune carte</p>").'
             </div>
-        </div><br>
-        ';
+        </div><br>';
+
+        // Ici, le javaScript qui permet d'afficher / masquer toute forme de changement sur la carte
+        // "changer le nom de la carte, changer sa date de fin, supprimer la carte ..."
         echo'
         <script>
             function toggleInfoCarte(id){

@@ -50,7 +50,8 @@ class Projet_controleur{
                     exit;
                 }
                 $nvTitreProjet = $_POST["titreProjet"];
-                $this->modele->editerProjet($_POST['id_projet'], $nvTitreProjet);
+                $nvDescriptionProjet = $_POST["description_projet"];
+                $this->modele->editerProjet($_POST['id_projet'], $nvTitreProjet, $nvDescriptionProjet);
                 header('Location: index.php');
                 break;
 
@@ -70,6 +71,12 @@ class Projet_controleur{
                     exit;
                 }
                 header("Location: index.php");
+                break;
+
+            case "supprimerProjet":
+                $idprojet = $_POST['id_projet'];
+                $this->modele->supprimerProjet($idprojet);
+                header('Location: index.php');
                 break;
 
             case "formProjet":

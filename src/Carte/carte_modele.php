@@ -6,23 +6,20 @@ class Carte_modele extends Connexion {
     public function creerCarte($idProjet) {
         $titre = $_POST['titre_carte'];
         $description = $_POST['description_carte'];
-        if(empty($_POST['date_projet'])){
-            $datefinal = NULL;
-        }else{
-            $datefinal = $_POST['date_projet'];
+        $datefinal = empty($_POST['date_projet']) ? NULL : $_POST['date_projet'];
+        if (!$this->deadlineValidePourProjet($idProjet, $datefinal)) {
+            return "deadline_hors_projet";
         }
         $date = date('Y-m-d H:i:s');
 
-        $requeteColonne = self::$bdd->prepare(
-            "SELECT id_colonne FROM colonne WHERE id_projet = ? AND libelle = 'A faire'");
+        $requeteColonne = self::$bdd->prepare("SELECT id_colonne FROM colonne WHERE id_projet = ? AND libelle = 'A faire'");
         $requeteColonne->execute([$idProjet]);
         $idColonne = $requeteColonne->fetch();
 
-        $requete = self::$bdd->prepare("
-        INSERT INTO 
+        $requete = self::$bdd->prepare("INSERT INTO 
         carte (titre_carte, cree_le, fini_le, deadline, description_carte, id_colonne, id_utilisateur, id_projet) 
         VALUES (?, ?, ?, ? ,?, ?, ?, ?)");
-        $requete->execute([$titre, $date , NULL , $datefinal, $description, $idColonne['id_colonne'], NULL, $idProjet]);
+        $requete->execute([$titre, $date, NULL, $datefinal, $description, $idColonne['id_colonne'], $_SESSION['id_utilisateur'], $idProjet]);
         return self::$bdd->lastInsertId();
     }
 
@@ -39,16 +36,26 @@ class Carte_modele extends Connexion {
         $requete->execute([$idCarte]);
     }
 
-
     public function editerCarte($idCarte, $titre, $description, $dateLimite){
         if ($dateLimite == "") {
             $dateLimite = NULL;
         }
-        $requete = self::$bdd->prepare("
-        UPDATE carte c INNER JOIN projet p ON c.id_projet = p.id_projet
+        $requete = self::$bdd->prepare("SELECT id_projet FROM carte WHERE id_carte = ?");
+        $requete->execute([$idCarte]);
+        $carte = $requete->fetch();
+        if ($carte === false) return false;
+        if (!$this->deadlineValidePourProjet($carte['id_projet'], $dateLimite)) {
+            return "deadline_hors_projet";
+        }
+        if (!$this->deadlineValidePourDependances($idCarte, $dateLimite)) {
+            return "deadline_incoherente_dependance";
+        }
+
+        $requete = self::$bdd->prepare("UPDATE carte c INNER JOIN projet p ON c.id_projet = p.id_projet
         SET c.titre_carte = ?, c.description_carte = ?, c.deadline = ?
         WHERE c.id_carte = ? AND p.fini_le IS NULL");
         $requete->execute([$titre, $description, $dateLimite, $idCarte]);
+        return true;
     }
 
     public function getCartes($idProjet){
@@ -58,16 +65,6 @@ class Carte_modele extends Connexion {
         ORDER BY c.id_colonne, c.id_carte");
         $requete->execute([$idProjet]);
         return $requete->fetchAll();
-    }
-
-    public function getUtilisateurCarte($idCarte){
-        $requete = self::$bdd->prepare("
-        SELECT u.id_utilisateur, u.nom 
-        FROM utilisateur u
-        INNER JOIN carte c ON u.id_utilisateur = c.id_utilisateur
-        WHERE c.id_carte = ?");
-        $requete->execute([$idCarte]);
-        return $requete->fetch();
     }
 
     public function assignerUtilisateurCarte($idCarte, $idUtilisateur){
@@ -96,6 +93,19 @@ class Carte_modele extends Connexion {
         $requeteVerif = self::$bdd->prepare("SELECT * FROM depend_de WHERE id_carte = ? AND id_carte_dependante = ?");
         $requeteVerif->execute([$idCarte, $idCarteDependante]);
         if ($requeteVerif->fetch() !== false) return false;
+
+        $requete = self::$bdd->prepare("SELECT deadline FROM carte WHERE id_carte = ?");
+        $requete->execute([$idCarte]);
+        $carteActuelle = $requete->fetch();
+
+        $requete->execute([$idCarteDependante]);
+        $carteDependante = $requete->fetch();
+
+        if ($carteActuelle && $carteDependante
+            && $carteActuelle['deadline'] !== null && $carteDependante['deadline'] !== null
+            && strtotime($carteActuelle['deadline']) > strtotime($carteDependante['deadline'])) {
+            return "deadline_incoherente";
+        }
 
         $requete = self::$bdd->prepare("INSERT INTO depend_de (id_carte, id_carte_dependante) VALUES (?, ?)");
         $requete->execute([$idCarte, $idCarteDependante]);
@@ -183,4 +193,39 @@ class Carte_modele extends Connexion {
         return $resultat ? $resultat['id_utilisateur'] : null;
     }
 
+    public function getDeadlineProjet($idProjet){
+        $requete = self::$bdd->prepare("SELECT deadline FROM projet WHERE id_projet = ?");
+        $requete->execute([$idProjet]);
+        $resultat = $requete->fetch();
+        return $resultat ? $resultat['deadline'] : null;
+    }
+    public function deadlineValidePourProjet($idProjet, $deadlineCarte){
+        if (empty($deadlineCarte)) return true;
+        $deadlineProjet = $this->getDeadlineProjet($idProjet);
+        if ($deadlineProjet === null) return true;
+        return strtotime($deadlineCarte) <= strtotime($deadlineProjet);
+    }
+
+    public function deadlineValidePourDependances($idCarte, $nouvelleDeadline){
+        if (empty($nouvelleDeadline)) return true;
+        $dependances = $this->getDependancesCarte($idCarte);
+        foreach ($dependances as $dep) {
+            $requete = self::$bdd->prepare("SELECT deadline FROM carte WHERE id_carte = ?");
+            $requete->execute([$dep['id_carte']]);
+            $carteDep = $requete->fetch();
+            if ($carteDep && $carteDep['deadline'] !== null
+                && strtotime($nouvelleDeadline) > strtotime($carteDep['deadline'])) {
+                return false;
+            }
+        }
+        return true;
+    }
+/*
+    public function getUtilisateurCarte($idCarte){
+        $requete = self::$bdd->prepare("SELECT u.id_utilisateur, u.nom
+        FROM utilisateur u INNER JOIN carte c ON u.id_utilisateur = c.id_utilisateur WHERE c.id_carte = ?");
+        $requete->execute([$idCarte]);
+        return $requete->fetch();
+    }
+*/
 }

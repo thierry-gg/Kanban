@@ -58,7 +58,7 @@ p { margin: 0.35em 0; }
 
 em {
     font-style: normal;
-    color: var(--ambre);
+    color: white;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.85rem;
 }
@@ -145,6 +145,7 @@ button[onclick*="Supprimer"]:hover {
 }
 
 input[type="text"],
+input[type="password"],
 input[type="date"],
 select,
 textarea {
@@ -162,7 +163,7 @@ label {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--encre-douce);
+    color: white;
     display: inline-block;
     margin-bottom: 3px;
 }
@@ -199,6 +200,13 @@ body > form input[type="submit"] {
     margin-top: 6px;
 }
 body > form br { display: none; }
+
+body > form input[type="password"] {
+    display: block;
+    width: 100%;
+    margin: 4px 0 14px;
+}
+
 
 .projet {
     background: var(--papier);
@@ -364,6 +372,21 @@ body > form br { display: none; }
     border-left: 3px solid var(--ambre);
 }
 
+.kanban > .colonne:nth-of-type(1) .carte {
+    border-left-color: #FF9800;
+    background: #FFEACF;
+}
+
+.kanban > .colonne:nth-of-type(2) .carte {
+    border-left-color: #FFF700;
+    background: #FFFED1;
+}
+
+.kanban > .colonne:nth-of-type(3) .carte {
+    border-left-color: #2BFF24;
+    background: #D1FFD1;
+}
+
 hr {
     border: none;
     border-top: 1px dashed rgba(255,255,255,0.15);
@@ -407,4 +430,54 @@ hr {
     margin: 0;
     padding: 10px 20px;
     font-size: 0.95rem;
+}
+
+.liste-dependances {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 7px;
+    margin-top: 10px;
+}
+
+.dependance {
+    background: var(--papier);
+    color: var(--encre);
+    border-left: 3px solid var(--corail);
+    border-radius: var(--rayon);
+    box-shadow: var(--ombre-fiche);
+    padding: 7px;
+    text-align: center;
+    min-width: 0;
+}
+
+.dependance span {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+}
+
+.dependance form {
+    margin: 0;
+}
+
+.dependance button {
+    font-size: 0.72rem;
+    padding: 5px 9px;
+    background: transparent;
+    border-color: var(--corail);
+    color: var(--corail);
+}
+
+.dependance button:hover {
+    background: var(--corail);
+    color: var(--papier);
+}
+
+@media (max-width: 720px) {
+    .liste-dependances {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }

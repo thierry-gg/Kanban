@@ -2,8 +2,8 @@
 class Carte_vue {
 
     public function form_carte($idProjet){
-//        var_dump($idProjet);
 
+        // Formulaire de création de carte
         echo'<br>
             <form action="index.php?module=carte&action=carte" method="post">
                 <label>Titre de la carte :</label>
@@ -18,6 +18,7 @@ class Carte_vue {
         ';
     }
 
+    // Formulaire d'assignation d'un responsable pour une carte
     public function formUtilisateurCarte($idProjet, $idCarte, $membreActuel){
         echo '<br><h3>Assigner un responsable</h3>';
         if (count($membreActuel) > 0) {
@@ -38,6 +39,7 @@ class Carte_vue {
             </form>';
     }
 
+    // Formulaire de déclaration d'une dépendance
     public function formDependanceCarte($idProjet, $idCarte, $autresCartes, $dependances){
         echo '<br><h3>Déclarer une dépendance</h3>';
         if (count($autresCartes) === 0) {
@@ -55,6 +57,8 @@ class Carte_vue {
                     echo '<option value="'.$c['id_carte'].'">'.htmlspecialchars($c['titre_carte']).'</option>';
                 }
                 echo '</select>
+                <a href="index.php?module=projet&action=afficherProjet&id='.$idProjet.'">
+                <button type="button">Retour</button></a>
                 <input type="submit" value="Valider">
             </form>';
 
@@ -62,18 +66,18 @@ class Carte_vue {
         if (count($dependances) === 0) {
             echo '<p>Aucune dépendance.</p>';
         } else {
+            echo'<div class="liste-dependances">';
             foreach ($dependances as $d) {
                 echo '
-                <form action="index.php?module=carte&action=supprimerDependanceCarte" method="POST">
-                    <input type="hidden" name="id_carte" value="'.$idCarte.'">
-                    <input type="hidden" name="id_carte_dependante" value="'.$d['id_carte'].'">
-                    '.htmlspecialchars($d['titre_carte']).'
-                    <button type="submit">Supprimer</button><br><br>
-                </form>';
+                <div class="dependance">
+                    <span>'.htmlspecialchars($d['titre_carte']).'</span>
+                    <form action="index.php?module=carte&action=supprimerDependanceCarte" method="POST">
+                        <input type="hidden" name="id_carte" value="'.$idCarte.'">
+                        <input type="hidden" name="id_carte_dependante" value="'.$d['id_carte'].'">
+                        <button type="submit">Supprimer</button><br><br>
+                    </form>
+                </div>';
             }
         }
-        echo '
-        <a href="index.php?module=projet&action=afficherProjet&id='.$idProjet.'">
-            <button type="button">Retour</button></a>';
     }
 }

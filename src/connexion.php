@@ -2,7 +2,7 @@
 class Connexion{
     static protected $bdd;
 
-    // connexion a ma base de donnée, XAMPP phpmyadmin
+    // connexion a la base de donnée, XAMPP phpmyadmin
     public static function initConnexion(){
         $dsn = "mysql:host=localhost;dbname=kanban_schema;charset=utf8";
         $user = "root";

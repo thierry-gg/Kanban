@@ -15,10 +15,13 @@ class Utilisateur_controleur {
 
     public function exec(){
         switch($this->action) {
+
+            // Est appelé par formProfile dans utilisateur_vue
             case "formProfile":
                 $this->vue->formProfile();
                 break;
 
+            // Est appelé par profile dans utilisateur_modele
             case "profile":
                 $nvNom = $_POST['nom'];
                 $this->modele->editProfile($_SESSION['id_utilisateur'], $nvNom);
@@ -26,6 +29,7 @@ class Utilisateur_controleur {
                 header('Location: index.php');
                 break;
 
+            // Est appelé par supprimerProfile dans utilisateur_modele
             case "supprimerProfile":
                 $this->modele->supprimerProfile($_SESSION['id_utilisateur']);
                 if (session_destroy()) {
@@ -33,11 +37,13 @@ class Utilisateur_controleur {
                 }
                 break;
 
+            // Est appelé par formAjoutUtilisateur dans utilisateur_vue
             case "formAjoutUtilisateur":
                 $idProjet = $_POST['id_projet'];
                 $this->vue->formAjouterUtilisateurProjet($idProjet);
                 break;
 
+            // Est appelé par ajouterUtilisateurProjet dans utilisateur_modele
             case "ajouterUtilisateurProjet":
                 $nom = $_POST['nom'];
                 $idProjet = $_POST['id_projet'];
@@ -51,12 +57,14 @@ class Utilisateur_controleur {
                 }
                 break;
 
+            // Est appelé par formGestionDroit dans utilisateur_vue
             case "formGestionDroit":
                 $idProjet = $_GET['id_projet'];
                 $utilisateurs = $this->modele->getUtilisateursAvecRole($idProjet);
                 $this->vue->formGestionDroit($utilisateurs, $idProjet);
                 break;
 
+            // Est appelé par modifierRoles dans utilisateur_modele
             case "modifierRoles":
                 $idProjet = $_POST['id_projet'];
                 $modification = $this->modele->modifierRoles($idProjet);
